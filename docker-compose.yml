@@ -1,4 +1,4 @@
-# This docker compose template assumes you're already run traefik reverse proxy
+# This docker compose template assumes you're already running traefik reverse proxy
 # if you use a different reverse proxy, you can safely remove the traefik labels and expose the ports.
 # The server container is listening on port 8000, the frontend is listening on port 3000
 
