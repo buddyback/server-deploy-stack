@@ -1,0 +1,37 @@
+# This docker compose template assumes you're already run traefik reverse proxy
+# if you use a different reverse proxy, you can safely remove the traefik labels and expose the ports.
+# The server container is listening on port 8000, the frontend is listening on port 3000
+
+services:
+    server:
+        image: git.marcorealacci.me/buddyback/buddyback-server:latest
+        pull_policy: always
+        restart: unless-stopped
+        volumes:
+           - "./buddybacl-data:/data"
+        command: >
+            sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 server.asgi:application"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.buddyback-api.entrypoints=web, websecure"
+            - "traefik.http.routers.buddyback-api.rule=Host(`buddyback-api.com`)"
+            - "traefik.http.routers.buddyback-api.tls=true"
+            - "traefik.http.services.buddyback-api.loadbalancer.server.port=8000"
+            - "traefik.http.routers.buddyback-api.tls.certresolver=production"
+        environment:
+            - DB_PATH=/data
+            - DEBUG=False
+    frontend:
+        image: git.marcorealacci.me/buddyback/buddyback-frontend:latest
+        pull_policy: always
+        restart: unless-stopped
+        environment:
+            - PORT=3003
+            - HOSTNAME=0.0.0.0
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.buddyback-frontend.entrypoints=web, websecure"
+            - "traefik.http.routers.buddyback-frontend.rule=Host(`buddyback-dashboard.your-domain.com`)"
+            - "traefik.http.routers.buddyback-frontend.tls=true"
+            - "traefik.http.services.buddyback-frontend.loadbalancer.server.port=3003"
+            - "traefik.http.routers.buddyback-frontend.tls.certresolver=production"
